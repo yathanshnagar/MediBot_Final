@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical History - Medical Llama</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .history-filters {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-group {
+            flex: 1;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .history-timeline {
+            position: relative;
+        }
+
+        .timeline-item {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+            transform: translateX(5px);
+        }
+
+        .timeline-item.severity-emergency {
+            border-left-color: #ef4444;
+        }
+
+        .timeline-item.severity-urgent {
+            border-left-color: #f59e0b;
+        }
+
+        .timeline-item.severity-routine {
+            border-left-color: #10b981;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .timeline-date {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .timeline-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .severity-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-badge.emergency {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .severity-badge.urgent {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .severity-badge.routine {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .timeline-content {
+            margin-top: 15px;
+        }
+
+        .info-section {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: #4b5563;
+            line-height: 1.6;
+            padding-left: 28px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding-left: 28px;
+        }
+
+        .info-list li {
+            padding: 6px 0;
+            color: #4b5563;
+            position: relative;
+        }
+
+        .info-list li:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .expand-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .expand-button:hover {
+            background: #e5e7eb;
+        }
+
+        .expanded-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .expanded-details.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+
+        .no-history {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .no-history-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .no-history h2 {
+            font-size: 24px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .no-history p {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        .no-history button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .no-history button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand" onclick="window.location.href='/dashboard'">
+            🏥 Medical Llama
+        </div>
+        <div class="navbar-user">
+            <a href="/dashboard" class="back-btn">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📋 Medical History</h1>
+            <p>View all your past consultations and medical records</p>
+            <div class="download-buttons">
+                <button class="download-btn" onclick="downloadAllHistory('txt')">
+                    📄 Download All as TXT
+                </button>
+                <button class="download-btn" onclick="downloadAllHistory('pdf')">
+                    📑 Download All as PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="history-filters">
+            <div class="filter-group">
+                <label>Filter by Severity</label>
+                <select id="severityFilter" onchange="filterHistory()">
+                    <option value="all">All Severities</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="routine">Routine</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" id="searchFilter" placeholder="Search symptoms, conditions..." oninput="filterHistory()">
+            </div>
+        </div>
+
+        <div class="history-timeline" id="historyTimeline">
+            <!-- History items will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        
+        if (!currentUser) {
+            window.location.href = '/';
+        }
+
+        let allHistory = [];
+
+        async function loadMedicalHistory() {
+            try {
+                const response = await fetch(`http://localhost:8000/users/${currentUser.id}/medical-history`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    allHistory = await response.json();
+                    renderHistory(allHistory);
+                } else {
+                    renderNoHistory();
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                renderNoHistory();
+            }
+        }
+
+        function renderHistory(history) {
+            const timeline = document.getElementById('historyTimeline');
+            
+            if (!history || history.length === 0) {
+                renderNoHistory();
+                return;
+            }
+
+            timeline.innerHTML = history.map((item, index) => {
+                const date = new Date(item.timestamp);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const formattedTime = date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <div class="timeline-item severity-${item.severity}">
+                        <div class="timeline-header">
+                            <div>
+                                <div class="timeline-title">${item.chief_complaint || 'Medical Consultation'}</div>
+                                <div class="timeline-date">
+                                    <span>📅 ${formattedDate}</span>
+                                    <span>⏰ ${formattedTime}</span>
+                                </div>
+                            </div>
+                            <span class="severity-badge ${item.severity}">${item.severity}</span>
+                        </div>
+
+                        <div class="timeline-content">
+                            ${item.symptoms ? `
+                                <div class="info-section">
+                                    <div class="info-label">😷 Symptoms</div>
+                                    <div class="info-value">${item.symptoms}</div>
+                                </div>
+                            ` : ''}
+
+                            ${item.duration ? `
+                                <div class="info-section">
+                                    <div class="info-label">⏱️ Duration</div>
+                                    <div class="info-value">${item.duration}</div>
+                                </div>
+                            ` : ''}
+
+                            ${item.temperature ? `
+                                <div class="info-section">
+                                    <div class="info-label">🌡️ Temperature</div>
+                                    <div class="info-value">${item.temperature}°F</div>
+                                </div>
+                            ` : ''}
+
+                            ${item.diagnosis && item.diagnosis.length > 0 ? `
+                                <div class="info-section">
+                                    <div class="info-label">🔍 Possible Diagnosis</div>
+                                    <ul class="info-list">
+                                        ${item.diagnosis.map(d => `<li>${d}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+
+                            ${item.medications && item.medications.length > 0 ? `
+                                <div class="info-section">
+                                    <div class="info-label">💊 Prescribed Medications</div>
+                                    <ul class="info-list">
+                                        ${item.medications.map(m => `<li>${m}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+
+                            ${item.self_care && item.self_care.length > 0 ? `
+                                <div class="info-section">
+                                    <div class="info-label">🏠 Self-Care Actions</div>
+                                    <ul class="info-list">
+                                        ${item.self_care.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+
+                            <button class="expand-button" onclick="toggleDetails(${index})">
+                                <span id="expandText${index}">Show Full Conversation</span>
+                            </button>
+
+                            <div class="expanded-details" id="details${index}">
+                                ${item.full_conversation ? `
+                                    <div class="info-section">
+                                        <div class="info-label">💬 Full Conversation</div>
+                                        <div class="info-value" style="white-space: pre-line;">${item.full_conversation}</div>
+                                    </div>
+                                ` : ''}
+                                ${item.recommendations ? `
+                                    <div class="info-section">
+                                        <div class="info-label">📋 Recommendations</div>
+                                        <div class="info-value">${item.recommendations}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderNoHistory() {
+            const timeline = document.getElementById('historyTimeline');
+            timeline.innerHTML = `
+                <div class="no-history">
+                    <div class="no-history-icon">📋</div>
+                    <h2>No Medical History Yet</h2>
+                    <p>You haven't had any consultations with our AI assistant yet. Start your first consultation to build your medical history.</p>
+                    <button onclick="window.location.href='/chat'">Start Consultation</button>
+                </div>
+            `;
+        }
+
+        function toggleDetails(index) {
+            const details = document.getElementById(`details${index}`);
+            const text = document.getElementById(`expandText${index}`);
+            
+            if (details.classList.contains('show')) {
+                details.classList.remove('show');
+                text.textContent = 'Show Full Conversation';
+            } else {
+                details.classList.add('show');
+                text.textContent = 'Hide Full Conversation';
+            }
+        }
+
+        function filterHistory() {
+            const severityFilter = document.getElementById('severityFilter').value;
+            const searchText = document.getElementById('searchFilter').value.toLowerCase();
+
+            let filtered = allHistory;
+
+            // Filter by severity
+            if (severityFilter !== 'all') {
+                filtered = filtered.filter(item => item.severity === severityFilter);
+            }
+
+            // Filter by search text
+            if (searchText) {
+                filtered = filtered.filter(item => {
+                    const searchableText = [
+                        item.chief_complaint,
+                        item.symptoms,
+                        ...(item.diagnosis || []),
+                        ...(item.medications || [])
+                    ].join(' ').toLowerCase();
+                    
+                    return searchableText.includes(searchText);
+                });
+            }
+
+            renderHistory(filtered);
+        }
+
+        // Download All History Functions
+        function downloadAllHistory(format) {
+            if (allHistory.length === 0) {
+                alert('No medical history to download yet.');
+                return;
+            }
+
+            const date = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            if (format === 'txt') {
+                downloadHistoryAsTxt(date);
+            } else if (format === 'pdf') {
+                downloadHistoryAsPdf(date);
+            }
+        }
+
+        function downloadHistoryAsTxt(date) {
+            let content = `Medical Llama - AI Health Assistant\n`;
+            content += `${'='.repeat(80)}\n\n`;
+            content += `COMPLETE MEDICAL HISTORY\n`;
+            content += `Patient: ${currentUser.first_name} ${currentUser.last_name}\n`;
+            content += `Generated: ${date}\n`;
+            content += `Total Consultations: ${allHistory.length}\n`;
+            content += `\n${'='.repeat(80)}\n\n`;
+
+            allHistory.forEach((item, index) => {
+                const consultDate = new Date(item.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                content += `\n\nCONSULTATION #${index + 1}\n`;
+                content += `${'-'.repeat(80)}\n`;
+                content += `Date: ${consultDate}\n`;
+                content += `Chief Complaint: ${item.chief_complaint}\n`;
+                content += `Severity: ${item.severity.toUpperCase()}\n`;
+                content += `Confidence: ${(item.confidence * 100).toFixed(1)}%\n\n`;
+
+                content += `Symptoms: ${item.symptoms}\n`;
+                if (item.duration) content += `Duration: ${item.duration}\n`;
+                if (item.temperature) content += `Temperature: ${item.temperature}\n\n`;
+
+                if (item.diagnosis && item.diagnosis.length > 0) {
+                    content += `Possible Conditions:\n`;
+                    item.diagnosis.forEach(d => content += `  • ${d}\n`);
+                    content += `\n`;
+                }
+
+                if (item.medications && item.medications.length > 0) {
+                    content += `Medications:\n`;
+                    item.medications.forEach(m => content += `  • ${m}\n`);
+                    content += `\n`;
+                }
+
+                if (item.self_care && item.self_care.length > 0) {
+                    content += `Self-Care Recommendations:\n`;
+                    item.self_care.forEach(s => content += `  • ${s}\n`);
+                    content += `\n`;
+                }
+
+                if (item.recommendations) {
+                    content += `Additional Recommendations:\n${item.recommendations}\n`;
+                }
+
+                if (item.full_conversation) {
+                    content += `\nFull Conversation Transcript:\n`;
+                    content += `${'.'.repeat(80)}\n`;
+                    try {
+                        const conversation = JSON.parse(item.full_conversation);
+                        conversation.forEach((msg, msgIndex) => {
+                            content += `\n[${msgIndex + 1}] PATIENT: ${msg.user}\n`;
+                            content += `[${msgIndex + 1}] ASSISTANT: ${msg.assistant}\n`;
+                        });
+                    } catch (e) {
+                        content += item.full_conversation;
+                    }
+                    content += `\n${'.'.repeat(80)}\n`;
+                }
+
+                content += `\n${'='.repeat(80)}\n`;
+            });
+
+            content += `\n\nDISCLAIMER:\n`;
+            content += `This is not a substitute for professional medical advice.\n`;
+            content += `Always consult a qualified healthcare provider for diagnosis and treatment.\n`;
+
+            // Create download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `medical-history-complete-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadHistoryAsPdf(date) {
+            // Create comprehensive PDF content
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 30px; line-height: 1.6; font-size: 12px; }
+                        .header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 15px; margin-bottom: 25px; }
+                        .header h1 { color: #667eea; margin: 0; font-size: 24px; }
+                        .patient-info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+                        .consultation { margin-bottom: 30px; page-break-inside: avoid; border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; }
+                        .consultation-header { background: #667eea; color: white; padding: 10px 15px; margin: -20px -20px 15px -20px; border-radius: 8px 8px 0 0; }
+                        .consultation-header h3 { margin: 0; }
+                        .severity { display: inline-block; padding: 3px 10px; border-radius: 15px; font-weight: bold; font-size: 11px; }
+                        .severity-emergency { background: #fee2e2; color: #991b1b; }
+                        .severity-urgent { background: #fef3c7; color: #92400e; }
+                        .severity-routine { background: #d1fae5; color: #065f46; }
+                        .section { margin: 15px 0; }
+                        .section-title { font-weight: bold; color: #374151; margin-bottom: 5px; }
+                        .conversation { background: #f9fafb; padding: 10px; border-left: 3px solid #667eea; margin: 10px 0; font-size: 11px; }
+                        .disclaimer { background: #fee2e2; border-left: 4px solid #ef4444; padding: 10px; margin-top: 25px; font-size: 11px; page-break-inside: avoid; }
+                        ul { margin: 5px 0; padding-left: 20px; }
+                        li { margin: 3px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🏥 Medical Llama - Complete Medical History</h1>
+                        <p>Comprehensive Patient Medical Records</p>
+                    </div>
+                    
+                    <div class="patient-info">
+                        <p><strong>Patient:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
+                        <p><strong>Generated:</strong> ${date}</p>
+                        <p><strong>Total Consultations:</strong> ${allHistory.length}</p>
+                    </div>
+            `;
+
+            allHistory.forEach((item, index) => {
+                const consultDate = new Date(item.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const severityClass = `severity-${item.severity}`;
+
+                htmlContent += `
+                    <div class="consultation">
+                        <div class="consultation-header">
+                            <h3>Consultation #${index + 1}</h3>
+                        </div>
+                        
+                        <div class="section">
+                            <p><strong>Date:</strong> ${consultDate}</p>
+                            <p><strong>Chief Complaint:</strong> ${item.chief_complaint}</p>
+                            <p><strong>Severity:</strong> <span class="severity ${severityClass}">${item.severity.toUpperCase()}</span></p>
+                            <p><strong>Confidence:</strong> ${(item.confidence * 100).toFixed(1)}%</p>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-title">Clinical Information</div>
+                            <p><strong>Symptoms:</strong> ${item.symptoms}</p>
+                `;
+
+                if (item.duration) htmlContent += `<p><strong>Duration:</strong> ${item.duration}</p>`;
+                if (item.temperature) htmlContent += `<p><strong>Temperature:</strong> ${item.temperature}</p>`;
+
+                htmlContent += `</div>`;
+
+                if (item.diagnosis && item.diagnosis.length > 0) {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="section-title">Possible Conditions</div>
+                            <ul>
+                    `;
+                    item.diagnosis.forEach(d => {
+                        htmlContent += `<li>${d}</li>`;
+                    });
+                    htmlContent += `</ul></div>`;
+                }
+
+                if (item.medications && item.medications.length > 0) {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="section-title">Medications</div>
+                            <ul>
+                    `;
+                    item.medications.forEach(m => {
+                        htmlContent += `<li>${m}</li>`;
+                    });
+                    htmlContent += `</ul></div>`;
+                }
+
+                if (item.self_care && item.self_care.length > 0) {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="section-title">Self-Care Recommendations</div>
+                            <ul>
+                    `;
+                    item.self_care.forEach(s => {
+                        htmlContent += `<li>${s}</li>`;
+                    });
+                    htmlContent += `</ul></div>`;
+                }
+
+                if (item.recommendations) {
+                    htmlContent += `
+                        <div class="section">
+                            <div class="section-title">Additional Recommendations</div>
+                            <p>${item.recommendations}</p>
+                        </div>
+                    `;
+                }
+
+                if (item.full_conversation) {
+                    htmlContent += `<div class="section"><div class="section-title">Conversation Transcript</div>`;
+                    try {
+                        const conversation = JSON.parse(item.full_conversation);
+                        conversation.forEach((msg, msgIndex) => {
+                            htmlContent += `
+                                <div class="conversation">
+                                    <p><strong>[${msgIndex + 1}] Patient:</strong> ${msg.user}</p>
+                                    <p><strong>[${msgIndex + 1}] Assistant:</strong> ${msg.assistant.replace(/\n/g, '<br>')}</p>
+                                </div>
+                            `;
+                        });
+                    } catch (e) {
+                        htmlContent += `<div class="conversation">${item.full_conversation}</div>`;
+                    }
+                    htmlContent += `</div>`;
+                }
+
+                htmlContent += `</div>`;
+            });
+
+            htmlContent += `
+                    <div class="disclaimer">
+                        <strong>⚠️ DISCLAIMER:</strong> This is not a substitute for professional medical advice. 
+                        Always consult a qualified healthcare provider for diagnosis and treatment.
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                printWindow.print();
+                // Close after print dialog
+                setTimeout(() => printWindow.close(), 100);
+            };
+        }
+
+        // Load history on page load
+        loadMedicalHistory();
+    </script>
+</body>
+</html>

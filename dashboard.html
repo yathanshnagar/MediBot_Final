@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Llama - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-section {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .welcome-section h1 {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section p {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .card-action {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .appointments-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .appointments-section h2 {
+            font-size: 24px;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .appointment-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border: 2px solid #e5e7eb;
+            border-left: 5px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .appointment-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .appointment-time {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .appointment-date {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .appointment-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-scheduled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .appointment-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .no-appointments {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .notifications-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .notifications-section h2 {
+            font-size: 24px;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-item {
+            background: #f9fafb;
+            border-left: 4px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+
+        .notification-item.unread {
+            background: #ede9fe;
+            border-left-color: #7c3aed;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .notification-message {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            color: #9ca3af;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .no-notifications {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            🏥 Medical Llama
+        </div>
+        <div class="navbar-user">
+            <div class="user-info">
+                <div class="user-name" id="userName">Loading...</div>
+                <div class="user-email" id="userEmail"></div>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1 id="welcomeMessage">Welcome back!</h1>
+            <p>What would you like to do today?</p>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="notifications-section" id="notificationsSection">
+            <h2>🔔 Notifications <span class="badge" id="notificationBadge" style="display: none;">0</span></h2>
+            <div id="notificationsList">
+                <div class="loading-spinner">Loading notifications...</div>
+            </div>
+        </div>
+
+        <!-- Upcoming Appointments Section -->
+        <div class="appointments-section" id="appointmentsSection">
+            <h2>📅 Upcoming Appointments</h2>
+            <div id="appointmentsList">
+                <div class="loading-spinner">Loading appointments...</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card" onclick="navigateTo('chat_ui.html')">
+                <div class="card-icon">💬</div>
+                <div class="card-title">Start Consultation</div>
+                <div class="card-description">
+                    Chat with our AI assistant about your symptoms and get personalized medical guidance.
+                </div>
+                <button class="card-action">Start Chat</button>
+            </div>
+
+            <div class="dashboard-card" onclick="navigateTo('medical_history.html')">
+                <div class="card-icon">📋</div>
+                <div class="card-title">Medical History</div>
+                <div class="card-description">
+                    View your complete medical history, past consultations, diagnoses, and prescribed medications.
+                </div>
+                <button class="card-action">View History</button>
+            </div>
+
+            <div class="dashboard-card" onclick="navigateTo('profile.html')">
+                <div class="card-icon">👤</div>
+                <div class="card-title">Profile Settings</div>
+                <div class="card-description">
+                    Update your personal information, medical conditions, allergies, and current medications.
+                </div>
+                <button class="card-action">Edit Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        
+        if (!currentUser) {
+            window.location.href = '/';
+        } else {
+            // Display user info
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${currentUser.first_name}!`;
+            
+            // Load appointments and notifications
+            loadAppointments();
+            loadNotifications();
+            
+            // Set up auto-refresh every 30 seconds
+            setInterval(() => {
+                loadNotifications();
+            }, 30000);
+        }
+
+        async function loadAppointments() {
+            const appointmentsList = document.getElementById('appointmentsList');
+            
+            try {
+                const response = await fetch(`/appointments/user/${currentUser.id}?status=scheduled`);
+                const appointments = await response.json();
+                
+                if (appointments.length === 0) {
+                    appointmentsList.innerHTML = `
+                        <div class="no-appointments">
+                            <p style="font-size: 48px; margin-bottom: 10px;">📅</p>
+                            <p>No upcoming appointments</p>
+                            <p style="font-size: 14px; margin-top: 5px;">Start a consultation to book an appointment with a doctor</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Only show upcoming appointments
+                const now = new Date();
+                const upcomingAppointments = appointments.filter(appt => 
+                    new Date(appt.appointment_date) > now
+                );
+                
+                if (upcomingAppointments.length === 0) {
+                    appointmentsList.innerHTML = `
+                        <div class="no-appointments">
+                            <p style="font-size: 48px; margin-bottom: 10px;">📅</p>
+                            <p>No upcoming appointments</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                appointmentsList.innerHTML = upcomingAppointments.map(appt => {
+                    const date = new Date(appt.appointment_date);
+                    const dateStr = date.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    const timeStr = date.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const statusClass = `status-${appt.status}`;
+                    
+                    return `
+                        <div class="appointment-card">
+                            <div class="appointment-header">
+                                <div>
+                                    <div class="appointment-time">${timeStr}</div>
+                                    <div class="appointment-date">${dateStr}</div>
+                                </div>
+                                <span class="appointment-status ${statusClass}">${appt.status}</span>
+                            </div>
+                            <div class="appointment-details">
+                                <div class="detail-item">
+                                    <span>👨‍⚕️</span>
+                                    <span><strong>Dr. ${appt.doctor_name}</strong></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>🎓</span>
+                                    <span>${appt.doctor_specialization}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>🏥</span>
+                                    <span>${appt.hospital_name}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>📍</span>
+                                    <span>${appt.hospital_address}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>🩺</span>
+                                    <span>${appt.reason}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>⏱️</span>
+                                    <span>${appt.duration_minutes} minutes</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                appointmentsList.innerHTML = `
+                    <div class="no-appointments">
+                        <p style="color: #ef4444;">Failed to load appointments</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadNotifications() {
+            const notificationsList = document.getElementById('notificationsList');
+            const badge = document.getElementById('notificationBadge');
+            
+            try {
+                const response = await fetch(`/notifications/user/${currentUser.id}`);
+                const notifications = await response.json();
+                
+                const unreadCount = notifications.filter(n => !n.read).length;
+                
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+                if (notifications.length === 0) {
+                    notificationsList.innerHTML = `
+                        <div class="no-notifications">
+                            <p style="font-size: 48px; margin-bottom: 10px;">🔔</p>
+                            <p>No notifications yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Show only last 5 notifications
+                const recentNotifications = notifications.slice(0, 5);
+                
+                notificationsList.innerHTML = recentNotifications.map(notif => {
+                    const date = new Date(notif.created_at);
+                    const timeAgo = getTimeAgo(date);
+                    const unreadClass = notif.read ? '' : 'unread';
+                    
+                    return `
+                        <div class="notification-item ${unreadClass}" onclick="markAsRead(${notif.id})">
+                            <div class="notification-title">${notif.title}</div>
+                            <div class="notification-message">${notif.message}</div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notificationsList.innerHTML = `
+                    <div class="no-notifications">
+                        <p style="color: #ef4444;">Failed to load notifications</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function markAsRead(notificationId) {
+            try {
+                await fetch(`/notifications/${notificationId}/read`, {
+                    method: 'POST'
+                });
+                loadNotifications(); // Refresh notifications
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return interval + " year" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return interval + " month" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval + " day" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return interval + " hour" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return interval + " minute" + (interval === 1 ? "" : "s") + " ago";
+            
+            return "Just now";
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('authToken');
+                window.location.href = '/';
+            }
+        }
+
+        function navigateTo(page) {
+            // Map old file names to new routes
+            const routeMap = {
+                'chat_ui.html': '/chat',
+                'medical_history.html': '/history',
+                'profile.html': '/profile'
+            };
+            window.location.href = routeMap[page] || page;
+        }
+    </script>
+</body>
+</html>

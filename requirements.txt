@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+email-validator
+langchain
+langchain-community
+langgraph
+python-multipart
+python-dotenv
+aiofiles
+requests

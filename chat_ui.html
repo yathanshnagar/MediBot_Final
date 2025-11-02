@@ -1,0 +1,3099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Llama - AI Health Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 0;
+            width: 100%;
+            max-width: 1600px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #202123;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #444654;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: #343541;
+            border: 1px solid #565869;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: #40414f;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-history-item {
+            padding: 12px 16px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-history-item:hover {
+            background: #343541;
+        }
+
+        .chat-history-item.active {
+            background: #343541;
+        }
+
+        .chat-history-item .chat-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .chat-history-item .chat-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-history::-webkit-scrollbar-track {
+            background: #202123;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #565869;
+            border-radius: 4px;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #667eea;
+        }
+
+        .message.assistant .message-avatar {
+            background: #10b981;
+        }
+
+        .message-content {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 18px;
+            max-width: 70%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #1f2937;
+        }
+
+        .chat-input-container {
+            padding: 25px;
+            background: white;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Media Upload Controls */
+        .media-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px 25px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .media-button {
+            padding: 10px 15px;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .media-button:hover {
+            background: #e5e7eb;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .media-button input[type="file"] {
+            display: none;
+        }
+
+        .media-preview {
+            padding: 10px 25px;
+            background: #f3f4f6;
+            border-top: 1px solid #e0e0e0;
+            display: none;
+        }
+
+        .media-preview.active {
+            display: block;
+        }
+
+        .preview-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .preview-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .preview-remove {
+            cursor: pointer;
+            color: #dc2626;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: #fef3c7;
+            border-top: 1px solid #fbbf24;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background: #dc2626;
+            border-radius: 50%;
+            animation: recordingPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes recordingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .recording-time {
+            font-weight: bold;
+            color: #92400e;
+        }
+
+        .stop-recording {
+            padding: 8px 20px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .message-attachment {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .message-attachment img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .message-attachment audio {
+            width: 250px;
+        }
+
+        .attachment-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .attachment-icon {
+            font-size: 24px;
+        }
+
+        /* Medical Report Section */
+        .report-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            overflow-y: auto;
+        }
+
+        .report-header {
+            background: #1f2937;
+            color: white;
+            padding: 25px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .report-content {
+            padding: 25px;
+        }
+
+        .report-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .report-card h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .severity-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .severity-yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .severity-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .report-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .report-item:last-child {
+            border-bottom: none;
+        }
+
+        .report-item strong {
+            display: block;
+            color: #4b5563;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .report-item p {
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        .report-item ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .report-item li {
+            padding: 8px 0;
+            color: #1f2937;
+        }
+
+        .report-item li:before {
+            content: "• ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(220, 38, 38, 0.95);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: emergencyPulse 2s ease-in-out infinite;
+        }
+
+        .emergency-overlay.active {
+            display: flex;
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { background: rgba(220, 38, 38, 0.95); }
+            50% { background: rgba(239, 68, 68, 0.98); }
+        }
+
+        .emergency-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: modalSlideIn 0.5s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .emergency-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: emergencyIconPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes emergencyIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .emergency-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 15px;
+        }
+
+        .emergency-message {
+            font-size: 18px;
+            color: #1f2937;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .emergency-call-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .emergency-call-button:hover {
+            background: #b91c1c;
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(220, 38, 38, 0.4);
+        }
+
+        .emergency-call-button:active {
+            transform: scale(0.95);
+        }
+
+        .calling-animation {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .calling-animation.active {
+            display: block;
+        }
+
+        .calling-text {
+            font-size: 20px;
+            color: #dc2626;
+            margin-bottom: 15px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .close-emergency {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-emergency:hover {
+            background: #4b5563;
+        }
+
+        .emergency-instructions {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .emergency-instructions h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .emergency-instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .emergency-instructions li {
+            color: #78350f;
+            margin: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .emergency-instructions li:before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Appointment Modal Styles */
+        /* Overlay: hidden by default, appears as a right-side panel when active */
+        .modal-overlay {
+            display: none; /* hidden until activated */
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 420px; /* panel width */
+            z-index: 2000;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .modal-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        .modal-overlay .appointment-modal {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            background: white;
+            border-radius: 16px 0 0 16px;
+            overflow: hidden;
+            box-shadow: -20px 0 60px rgba(0,0,0,0.25);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Slide in when overlay is active */
+        .modal-overlay.active .appointment-modal {
+            transform: translateX(0);
+        }
+
+        .appointment-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .appointment-modal-header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-weight: 300;
+        }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .appointment-steps {
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .step {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step h3 {
+            color: #1f2937;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-step-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-step-btn:hover {
+            background: #e5e7eb;
+            transform: translateX(-3px);
+        }
+
+        .hospital-list, .doctor-list {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+        }
+
+        .hospital-card, .doctor-card {
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hospital-card::before, .doctor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+
+        .hospital-card:hover, .doctor-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .hospital-card:hover::before, .doctor-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .hospital-card.selected, .doctor-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+        }
+
+        .hospital-card.selected::before, .doctor-card.selected::before {
+            transform: scaleY(1);
+        }
+
+        .hospital-card h4, .doctor-card h4 {
+            margin: 0 0 15px 0;
+            color: #1f2937;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hospital-info, .doctor-info {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.8;
+        }
+
+        .hospital-info div, .doctor-info div {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-icon {
+            width: 24px;
+            font-size: 16px;
+            display: inline-block;
+        }
+
+        .rating {
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .doctor-card {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .doctor-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .doctor-details {
+            flex: 1;
+        }
+
+        .date-selection {
+            margin-bottom: 30px;
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 16px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .date-selection label {
+            display: block;
+            margin-bottom: 12px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .date-selection input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .date-selection input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .time-slot {
+            padding: 16px;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 15px;
+            color: #374151;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .time-slot.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .time-slot.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f3f4f6;
+        }
+
+        .time-slot.disabled:hover {
+            transform: none;
+            border-color: #e5e7eb;
+        }
+
+        .appointment-summary {
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .summary-item {
+            margin: 18px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .summary-label {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-value {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: right;
+        }
+
+        #appointmentNotes {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 15px;
+            margin-bottom: 25px;
+            resize: vertical;
+            transition: all 0.3s;
+            min-height: 100px;
+        }
+
+        #appointmentNotes:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .confirm-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .confirm-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .specialties-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .specialty-tag {
+            background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
+            color: #5b21b6;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #c4b5fd;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #ef4444;
+            background: #fee2e2;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .success-checkmark {
+            font-size: 60px;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Emergency Modal Overlay -->
+    <div class="emergency-overlay" id="emergencyOverlay">
+        <div class="emergency-modal">
+            <div class="emergency-icon">🚨</div>
+            <div class="emergency-title">EMERGENCY DETECTED</div>
+            <div class="emergency-message" id="emergencyMessage">
+                Your symptoms indicate a potential medical emergency. Immediate medical attention is required.
+            </div>
+            
+            <button class="emergency-call-button" onclick="initiateEmergencyCall()">
+                📞 Call 000 (Emergency)
+            </button>
+            
+            <div class="calling-animation" id="callingAnimation">
+                <div class="calling-text">☎️ Calling Emergency Services...</div>
+                <div style="font-size: 14px; color: #666;">This is a simulation. In a real emergency, call 000 immediately.</div>
+            </div>
+            
+            <div class="emergency-instructions">
+                <h4>⚠️ While Waiting for Help:</h4>
+                <ul>
+                    <li>Stay calm and keep the person comfortable</li>
+                    <li>Do not leave the person alone</li>
+                    <li>Follow any specific first aid instructions</li>
+                    <li>Have someone ready to guide paramedics to your location</li>
+                    <li>Do not give food or water unless instructed</li>
+                </ul>
+            </div>
+            
+            <button class="close-emergency" onclick="closeEmergencyModal()">
+                I Understand - Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Appointment Booking Modal -->
+    <div class="modal-overlay" id="appointmentModalOverlay">
+        <div class="appointment-modal">
+            <div class="appointment-modal-header">
+                <h2>📅 Book Doctor Appointment</h2>
+                <button class="close-btn" onclick="closeAppointmentModal()">✕</button>
+            </div>
+            
+            <div class="appointment-steps">
+                <!-- Step 1: Hospital Selection -->
+                <div class="step" id="step1" style="display: block;">
+                    <h3>🏥 Select Hospital</h3>
+                    <p style="color: #6b7280; margin-bottom: 25px; font-size: 15px;">Choose a nearby hospital for your appointment</p>
+                    <div class="hospital-list" id="hospitalList">
+                        <!-- Hospitals will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Step 2: Doctor Selection -->
+                <div class="step" id="step2" style="display: none;">
+                    <button class="back-step-btn" onclick="goToStep(1)">← Back to Hospitals</button>
+                    <h3>👨‍⚕️ Select Doctor</h3>
+                    <p style="color: #6b7280; margin-bottom: 25px; font-size: 15px;">Choose a qualified doctor for your consultation</p>
+                    <div class="doctor-list" id="doctorList">
+                        <!-- Doctors will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Step 3: Time Slot Selection -->
+                <div class="step" id="step3" style="display: none;">
+                    <button class="back-step-btn" onclick="goToStep(2)">← Back to Doctors</button>
+                    <h3>📅 Select Date & Time</h3>
+                    <p style="color: #6b7280; margin-bottom: 25px; font-size: 15px;">Pick a convenient date and time for your appointment</p>
+                    <div class="date-selection">
+                        <label>📆 Choose Appointment Date:</label>
+                        <input type="date" id="appointmentDate" onchange="loadTimeSlots()">
+                    </div>
+                    <div id="timeSlotsContainer">
+                        <p style="color: #9ca3af; text-align: center; padding: 30px;">Please select a date to view available time slots</p>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Confirmation -->
+                <div class="step" id="step4" style="display: none;">
+                    <button class="back-step-btn" onclick="goToStep(3)">← Back to Time Selection</button>
+                    <h3>✓ Confirm Appointment</h3>
+                    <p style="color: #6b7280; margin-bottom: 25px; font-size: 15px;">Review your appointment details and confirm</p>
+                    <div class="appointment-summary" id="appointmentSummary">
+                        <!-- Summary will be shown here -->
+                    </div>
+                    <label style="display: block; margin-bottom: 12px; color: #374151; font-weight: 600;">Additional Notes (Optional):</label>
+                    <textarea id="appointmentNotes" placeholder="Any specific concerns, symptoms, or questions you'd like the doctor to know about..."></textarea>
+                    <button class="confirm-btn" onclick="confirmAppointment()">
+                        ✓ Confirm Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="createNewChat()">
+                    <span style="font-size: 18px;">➕</span>
+                    <span>New Chat</span>
+                </button>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <!-- Chat history items will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                    <button onclick="window.location.href='/dashboard'" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                        ← Dashboard
+                    </button>
+                    <span>🏥 Medical Llama - AI Health Assistant</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="downloadConversation('txt')" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                        📄 Download TXT
+                    </button>
+                    <button onclick="downloadConversation('pdf')" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                        📑 Download PDF
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! I'm your AI medical assistant. I'm here to help assess your symptoms and provide guidance. 
+                        <br><br>
+                        <strong>How can I help you today?</strong> Please describe any symptoms you're experiencing.
+                        <br><br>
+                        <em style="font-size: 12px; opacity: 0.7;">Disclaimer: This is not a substitute for professional medical advice. In case of emergency, call 999 immediately.</em>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recording Indicator -->
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="recording-dot"></div>
+                <span class="recording-time" id="recordingTime">0:00</span>
+                <span style="color: #92400e;">Recording voice message...</span>
+                <button class="stop-recording" onclick="stopRecording()">Stop</button>
+            </div>
+
+            <!-- Media Preview -->
+            <div class="media-preview" id="mediaPreview"></div>
+
+            <!-- Media Controls -->
+            <div class="media-controls">
+                <label class="media-button" title="Upload Image">
+                    <span>📷</span>
+                    <span>Photo</span>
+                    <input type="file" accept="image/*" onchange="handleImageUpload(event)" multiple>
+                </label>
+                
+                <label class="media-button" title="Upload Document">
+                    <span>📄</span>
+                    <span>Document</span>
+                    <input type="file" accept=".pdf,.doc,.docx,image/*" onchange="handleFileUpload(event)" multiple>
+                </label>
+                
+                <button class="media-button" onclick="toggleVoiceRecording()" id="voiceButton" title="Record Voice">
+                    <span>🎤</span>
+                    <span>Voice</span>
+                </button>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Type your symptoms here..."
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                >
+                <button class="send-button" onclick="sendMessage()" id="sendButton">
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <!-- Medical Report Section -->
+        <div class="report-section">
+            <div class="report-header">
+                📊 Medical Report
+            </div>
+            
+            <div class="report-content" id="reportContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <p>Start chatting to generate your medical report</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get current user
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        if (!currentUser) {
+            window.location.href = '/';
+        }
+
+        // Chat Session Management - Store per user
+        const userStorageKey = `chatSessions_user_${currentUser.id}`;
+        let chatSessions = JSON.parse(localStorage.getItem(userStorageKey)) || [];
+        let currentChatId = null;
+        let conversationHistory = [];
+        let patientId = 'patient_' + Date.now();
+        let currentReport = {
+            severity: null,
+            confidence: 0,
+            symptoms: [],
+            possibleConditions: [],
+            recommendations: [],
+            medications: []
+        };
+
+        // Initialize
+        function initApp() {
+            if (chatSessions.length === 0) {
+                createNewChat();
+            } else {
+                loadChatSession(chatSessions[0].id);
+            }
+            renderChatHistory();
+        }
+
+        // Create new chat session
+        function createNewChat() {
+            const chatId = 'chat_' + Date.now();
+            patientId = 'patient_' + Date.now();
+            
+            const newChat = {
+                id: chatId,
+                patientId: patientId,
+                title: 'New Conversation',
+                timestamp: new Date().toISOString(),
+                messages: [],
+                report: {
+                    severity: null,
+                    confidence: 0,
+                    symptoms: [],
+                    possibleConditions: [],
+                    recommendations: [],
+                    medications: []
+                }
+            };
+
+            chatSessions.unshift(newChat);
+            saveChatSessions();
+            loadChatSession(chatId);
+            renderChatHistory();
+            initializePatient();
+        }
+
+        // Load chat session
+        function loadChatSession(chatId) {
+            const chat = chatSessions.find(c => c.id === chatId);
+            if (!chat) return;
+
+            currentChatId = chatId;
+            patientId = chat.patientId;
+            conversationHistory = chat.messages || [];
+            currentReport = chat.report || {
+                severity: null,
+                confidence: 0,
+                symptoms: [],
+                possibleConditions: [],
+                recommendations: [],
+                medications: []
+            };
+
+            // Clear and reload messages
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! I'm your AI medical assistant. I'm here to help assess your symptoms and provide guidance. 
+                        <br><br>
+                        <strong>How can I help you today?</strong> Please describe any symptoms you're experiencing.
+                        <br><br>
+                        <em style="font-size: 12px; opacity: 0.7;">Disclaimer: This is not a substitute for professional medical advice. In case of emergency, call 999 immediately.</em>
+                    </div>
+                </div>
+            `;
+
+            // Reload messages
+            conversationHistory.forEach(msg => {
+                if (msg.user) {
+                    addMessage(msg.user, true, msg.media);
+                }
+                if (msg.assistant) {
+                    addMessage(msg.assistant, false);
+                }
+            });
+
+            // Update report
+            updateReport(currentReport);
+            renderChatHistory();
+        }
+
+        // Save chat sessions to localStorage
+        function saveChatSessions() {
+            localStorage.setItem(userStorageKey, JSON.stringify(chatSessions));
+        }
+
+        // Update current chat in sessions
+        function updateCurrentChat() {
+            const chat = chatSessions.find(c => c.id === currentChatId);
+            if (chat) {
+                chat.messages = conversationHistory;
+                chat.report = currentReport;
+                chat.timestamp = new Date().toISOString();
+                
+                // Auto-generate title from first user message
+                if (chat.title === 'New Conversation' && conversationHistory.length > 0) {
+                    const firstUserMsg = conversationHistory[0].user;
+                    chat.title = generateChatTitle(firstUserMsg);
+                }
+                
+                saveChatSessions();
+                renderChatHistory();
+            }
+        }
+
+        // Generate chat title from message
+        function generateChatTitle(message) {
+            // Extract key medical terms or use first few words
+            const words = message.split(' ').slice(0, 5).join(' ');
+            return words.length > 40 ? words.substring(0, 37) + '...' : words;
+        }
+
+        // Render chat history in sidebar
+        function renderChatHistory() {
+            const historyDiv = document.getElementById('chatHistory');
+            historyDiv.innerHTML = chatSessions.map(chat => `
+                <div class="chat-history-item ${chat.id === currentChatId ? 'active' : ''}" 
+                     onclick="loadChatSession('${chat.id}')">
+                    <span class="chat-icon">💬</span>
+                    <span class="chat-title">${chat.title}</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize patient
+        async function initializePatient() {
+            try {
+                const response = await fetch('http://localhost:8000/patients/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: patientId,
+                        name: "Anonymous User",
+                        age: 30,
+                        medical_history: [],
+                        allergies: [],
+                        current_medications: []
+                    })
+                });
+            } catch (error) {
+                console.log('Patient registration:', error.message);
+            }
+        }
+
+        // Save consultation to database
+        async function saveConsultationToDatabase(result) {
+            try {
+                // Get first user message as chief complaint
+                const chiefComplaint = conversationHistory.length > 0 ? conversationHistory[0].user : 'Medical consultation';
+                
+                // Extract symptoms from messages
+                const symptoms = conversationHistory.map(m => m.user).join('. ');
+                
+                // Build full conversation text
+                const fullConversation = conversationHistory.map(m => 
+                    `Patient: ${m.user}\n\nAssistant: ${m.assistant}`
+                ).join('\n\n---\n\n');
+                
+                // Get diagnosis from result
+                const diagnosis = result.care_pathway?.possible_conditions || 
+                                result.suggested_actions || [];
+
+                const consultationData = {
+                    user_id: currentUser.id,
+                    patient_id: patientId,
+                    chief_complaint: chiefComplaint.substring(0, 500),
+                    symptoms: symptoms,
+                    severity: result.severity,
+                    confidence: result.confidence,
+                    diagnosis: JSON.stringify(diagnosis),
+                    medications: JSON.stringify(currentReport.medications || []),
+                    self_care: JSON.stringify(result.suggested_actions || []),
+                    recommendations: result.recommendation,
+                    full_conversation: fullConversation,
+                    care_pathway: result.care_pathway?.recommended_pathway || null
+                };
+
+                const response = await fetch('http://localhost:8000/consultations/save', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify(consultationData)
+                });
+
+                if (response.ok) {
+                    console.log('Consultation saved to medical history');
+                }
+            } catch (error) {
+                console.error('Error saving consultation:', error);
+            }
+        }
+
+        // Start app
+        initApp();
+
+        // Media Upload State
+        let attachedMedia = [];
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingStartTime = null;
+        let recordingInterval = null;
+
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        attachedMedia.push({
+                            type: 'image',
+                            file: file,
+                            data: e.target.result,
+                            name: file.name
+                        });
+                        updateMediaPreview();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            event.target.value = ''; // Reset input
+        }
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    attachedMedia.push({
+                        type: file.type.startsWith('image/') ? 'image' : 'file',
+                        file: file,
+                        data: e.target.result,
+                        name: file.name,
+                        size: (file.size / 1024).toFixed(2) + ' KB'
+                    });
+                    updateMediaPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = ''; // Reset input
+        }
+
+        function updateMediaPreview() {
+            const previewDiv = document.getElementById('mediaPreview');
+            
+            if (attachedMedia.length === 0) {
+                previewDiv.classList.remove('active');
+                previewDiv.innerHTML = '';
+                return;
+            }
+
+            previewDiv.classList.add('active');
+            previewDiv.innerHTML = attachedMedia.map((media, index) => {
+                if (media.type === 'image') {
+                    return `
+                        <div class="preview-item">
+                            <img src="${media.data}" alt="${media.name}">
+                            <span>${media.name}</span>
+                            <span class="preview-remove" onclick="removeMedia(${index})">✕</span>
+                        </div>
+                    `;
+                } else if (media.type === 'audio') {
+                    return `
+                        <div class="preview-item">
+                            <span>🎤</span>
+                            <span>Voice recording (${media.duration}s)</span>
+                            <span class="preview-remove" onclick="removeMedia(${index})">✕</span>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="preview-item">
+                            <span>📄</span>
+                            <span>${media.name} (${media.size})</span>
+                            <span class="preview-remove" onclick="removeMedia(${index})">✕</span>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function removeMedia(index) {
+            attachedMedia.splice(index, 1);
+            updateMediaPreview();
+        }
+
+        async function toggleVoiceRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
+                        attachedMedia.push({
+                            type: 'audio',
+                            file: audioBlob,
+                            data: e.target.result,
+                            name: `voice_recording_${Date.now()}.webm`,
+                            duration: duration
+                        });
+                        updateMediaPreview();
+                    };
+                    reader.readAsDataURL(audioBlob);
+                    
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.start();
+                recordingStartTime = Date.now();
+                
+                // Show recording indicator
+                document.getElementById('recordingIndicator').classList.add('active');
+                document.getElementById('voiceButton').style.background = '#dc2626';
+                document.getElementById('voiceButton').style.color = 'white';
+                
+                // Update recording time
+                recordingInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('recordingTime').textContent = 
+                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+                
+            } catch (error) {
+                alert('Could not access microphone. Please grant permission and try again.');
+                console.error('Recording error:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearInterval(recordingInterval);
+                
+                // Hide recording indicator
+                document.getElementById('recordingIndicator').classList.remove('active');
+                document.getElementById('voiceButton').style.background = '';
+                document.getElementById('voiceButton').style.color = '';
+            }
+        }
+
+        function addMessage(content, isUser = false, mediaAttachments = null) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            let attachmentsHtml = '';
+            if (mediaAttachments && mediaAttachments.length > 0) {
+                attachmentsHtml = '<div class="message-attachment">';
+                mediaAttachments.forEach(media => {
+                    if (media.type === 'image') {
+                        attachmentsHtml += `<img src="${media.data}" alt="${media.name}" onclick="window.open('${media.data}', '_blank')">`;
+                    } else if (media.type === 'audio') {
+                        attachmentsHtml += `<audio controls src="${media.data}"></audio>`;
+                    } else {
+                        attachmentsHtml += `
+                            <div class="attachment-file">
+                                <span class="attachment-icon">📄</span>
+                                <div>
+                                    <div style="font-weight: bold;">${media.name}</div>
+                                    <div style="font-size: 12px; color: #666;">${media.size || ''}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                attachmentsHtml += '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">${content}${attachmentsHtml}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Helper to add assistant messages (convenience wrapper)
+        function addAssistantMessage(content) {
+            addMessage(content, false);
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typingIndicator');
+            if (typingDiv) typingDiv.remove();
+        }
+
+        function updateReport(result) {
+            const reportDiv = document.getElementById('reportContent');
+            const triageResult = result; // The full API response
+            
+            // Update internal state
+            if (triageResult.severity && triageResult.severity !== 'unknown') {
+                currentReport.severity = triageResult.severity;
+            }
+            if (triageResult.confidence) {
+                currentReport.confidence = triageResult.confidence;
+            }
+            
+            // Save updated report to current chat
+            updateCurrentChat();
+            
+            // Extract info from recommendation
+            const recommendation = triageResult.recommendation || '';
+            
+            // If still gathering information, show a minimal report
+            if (triageResult.severity === 'unknown' || !currentReport.severity) {
+                reportDiv.innerHTML = `
+                    <div class="report-card">
+                        <h3>💬 Gathering Information</h3>
+                        <div class="report-item">
+                            <p>I'm asking follow-up questions to better understand your symptoms and provide an accurate assessment.</p>
+                        </div>
+                    </div>
+                    <div class="report-card" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+                        <div class="report-item">
+                            <strong>⚠️ Important Disclaimer</strong>
+                            <p style="font-size: 13px;">${triageResult.disclaimer || 'This is not a substitute for professional medical advice. Always consult a qualified healthcare provider for diagnosis and treatment.'}</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Determine severity color
+            let severityClass = 'severity-green';
+            let severityText = '🟢 Self-Care';
+            let severityIcon = '✅';
+            
+            if (currentReport.severity === 'emergency') {
+                severityClass = 'severity-red';
+                severityText = '🔴 EMERGENCY';
+                severityIcon = '🚨';
+            } else if (currentReport.severity === 'urgent' || currentReport.severity === 'referral') {
+                severityClass = 'severity-yellow';
+                severityText = '🟡 Doctor Visit Recommended';
+                severityIcon = '⚠️';
+            }
+
+            // Build HTML
+            let html = `
+                <div class="report-card">
+                    <h3>${severityIcon} Assessment Status</h3>
+                    <div class="severity-badge ${severityClass}">${severityText}</div>
+                    <div class="report-item">
+                        <strong>Confidence Level</strong>
+                        <p>${Math.round(currentReport.confidence * 100)}%</p>
+                    </div>
+                </div>
+            `;
+
+            // Get triage result from the full response
+            const nestedTriageResult = triageResult.triage_result || {};
+            
+            // Patient's Condition / Symptoms
+            html += `
+                <div class="report-card">
+                    <h3>🩺 Patient's Condition</h3>
+                    <div class="report-item">
+                        <p>${recommendation}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Possible Diagnosis / Conditions
+            const possibleConditions = nestedTriageResult.possible_conditions || [];
+            if (possibleConditions && possibleConditions.length > 0) {
+                html += `
+                    <div class="report-card">
+                        <h3>🔍 Possible Conditions</h3>
+                        <ul>
+                            ${possibleConditions.map(condition => `<li>${condition}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Recommended Actions
+            if (triageResult.suggested_actions && triageResult.suggested_actions.length > 0) {
+                html += `
+                    <div class="report-card">
+                        <h3>📋 Recommended Actions</h3>
+                        <ul>
+                            ${triageResult.suggested_actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Medications (if any)
+            const medications = nestedTriageResult.medications || [];
+            if (medications && medications.length > 0) {
+                html += `
+                    <div class="report-card">
+                        <h3>💊 Suggested Medications</h3>
+                        <ul>
+                            ${medications.map(med => `<li>${med}</li>`).join('')}
+                        </ul>
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            <em>Note: These are suggestions only. Consult a pharmacist or doctor before taking any medication.</em>
+                        </p>
+                    </div>
+                `;
+            }
+
+            // Care pathway - only show if it exists and has valid data
+            if (triageResult.care_pathway && triageResult.care_pathway.recommended_pathway && 
+                triageResult.care_pathway.recommended_pathway !== 'no_action') {
+                const pathway = triageResult.care_pathway;
+                html += `
+                    <div class="report-card">
+                        <h3>🏥 Care Pathway</h3>
+                        <div class="report-item">
+                            <strong>Recommended Path</strong>
+                            <p>${pathway.recommended_pathway}</p>
+                        </div>
+                        ${pathway.urgency_timeframe ? `
+                            <div class="report-item">
+                                <strong>Timeframe</strong>
+                                <p>${pathway.urgency_timeframe}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Disclaimer
+            html += `
+                <div class="report-card" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+                    <div class="report-item">
+                        <strong>⚠️ Important Disclaimer</strong>
+                        <p style="font-size: 13px;">${triageResult.disclaimer || 'This is not a substitute for professional medical advice. Always consult a qualified healthcare provider for diagnosis and treatment.'}</p>
+                    </div>
+                </div>
+            `;
+
+            reportDiv.innerHTML = html;
+            
+            // Check if appointment booking should be offered
+            checkAndOfferAppointment();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const message = input.value.trim();
+            
+            if (!message && attachedMedia.length === 0) return;
+
+            // Disable input
+            input.disabled = true;
+            sendButton.disabled = true;
+
+            // Copy media attachments for this message
+            const messageMedia = [...attachedMedia];
+
+            // Add user message with media
+            addMessage(message || '(media attachment)', true, messageMedia);
+            input.value = '';
+
+            // Clear attached media and preview
+            attachedMedia = [];
+            updateMediaPreview();
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Prepare request body
+                const requestBody = {
+                    patient_id: patientId,
+                    message: message || '(Attached media files)',
+                    include_history: true
+                };
+
+                // Add media data if available
+                if (messageMedia.length > 0) {
+                    requestBody.media = messageMedia.map(media => ({
+                        type: media.type,
+                        data: media.data,
+                        name: media.name,
+                        size: media.size
+                    }));
+                }
+
+                // Send to API
+                const response = await fetch('http://localhost:8000/chat/triage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const result = await response.json();
+                
+                // Remove typing indicator
+                removeTypingIndicator();
+
+                // Check for emergency
+                if (result.severity === 'emergency' || result.needs_escalation) {
+                    // Show emergency modal
+                    showEmergencyModal(result.recommendation);
+                }
+
+                // Add AI response
+                addMessage(result.recommendation);
+
+                // Update medical report
+                updateReport(result);
+
+                // Store in history
+                conversationHistory.push({
+                    user: message,
+                    assistant: result.recommendation,
+                    media: messageMedia.length > 0 ? messageMedia : undefined
+                });
+
+                // Update current chat session
+                updateCurrentChat();
+
+                // Save consultation to database if diagnosis is complete
+                if (result.severity && result.severity !== 'unknown') {
+                    saveConsultationToDatabase(result);
+                }
+
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please make sure the server is running on http://localhost:8000');
+                console.error('Error:', error);
+            }
+
+            // Re-enable input
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
+        }
+
+        // Emergency Functions
+        function showEmergencyModal(message) {
+            const overlay = document.getElementById('emergencyOverlay');
+            const messageEl = document.getElementById('emergencyMessage');
+            
+            if (message) {
+                messageEl.textContent = message;
+            }
+            
+            overlay.classList.add('active');
+            
+            // Play alert sound (browser beep)
+            playEmergencySound();
+        }
+
+        function closeEmergencyModal() {
+            const overlay = document.getElementById('emergencyOverlay');
+            const callingAnimation = document.getElementById('callingAnimation');
+            
+            overlay.classList.remove('active');
+            callingAnimation.classList.remove('active');
+        }
+
+        function initiateEmergencyCall() {
+            const callButton = document.querySelector('.emergency-call-button');
+            const callingAnimation = document.getElementById('callingAnimation');
+            
+            // Hide button and show calling animation
+            callButton.style.display = 'none';
+            callingAnimation.classList.add('active');
+            
+            // Simulate call duration (5 seconds)
+            setTimeout(() => {
+                callingAnimation.innerHTML = `
+                    <div style="color: #059669; font-size: 20px; font-weight: bold; margin-bottom: 10px;">
+                        ✅ Emergency Services Contacted
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                        (This was a simulation - In a real emergency, call 000 immediately)
+                    </div>
+                    <div style="background: #d1fae5; padding: 15px; border-radius: 10px; text-align: left;">
+                        <strong style="color: #065f46;">What happens next:</strong>
+                        <ul style="margin-top: 10px; color: #047857;">
+                            <li>Paramedics have been dispatched to your location</li>
+                            <li>Estimated arrival time: 8-12 minutes</li>
+                            <li>Stay on the line with the operator</li>
+                            <li>Follow all instructions given</li>
+                        </ul>
+                    </div>
+                `;
+            }, 3000);
+        }
+
+        function playEmergencySound() {
+            // Create audio context for beep sound
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800; // Frequency in hertz
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                // Play again after delay for double beep
+                setTimeout(() => {
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode2 = audioContext.createGain();
+                    
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioContext.destination);
+                    
+                    oscillator2.frequency.value = 800;
+                    oscillator2.type = 'sine';
+                    
+                    gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    
+                    oscillator2.start(audioContext.currentTime);
+                    oscillator2.stop(audioContext.currentTime + 0.5);
+                }, 600);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // Download Conversation Functions
+        function downloadConversation(format) {
+            if (conversationHistory.length === 0) {
+                alert('No conversation to download yet. Start chatting first!');
+                return;
+            }
+
+            const chat = chatSessions.find(c => c.id === currentChatId);
+            const title = chat ? chat.title : 'Medical Conversation';
+            const date = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            if (format === 'txt') {
+                downloadAsTxt(title, date);
+            } else if (format === 'pdf') {
+                downloadAsPdf(title, date);
+            }
+        }
+
+        function downloadAsTxt(title, date) {
+            let content = `Medical Llama - AI Health Assistant\n`;
+            content += `${'='.repeat(60)}\n\n`;
+            content += `Conversation: ${title}\n`;
+            content += `Date: ${date}\n`;
+            content += `Patient: ${currentUser.first_name} ${currentUser.last_name}\n`;
+            content += `\n${'='.repeat(60)}\n\n`;
+
+            // Add conversation
+            conversationHistory.forEach((msg, index) => {
+                content += `[${index + 1}] PATIENT:\n${msg.user}\n\n`;
+                content += `[${index + 1}] ASSISTANT:\n${msg.assistant}\n\n`;
+                content += `${'-'.repeat(60)}\n\n`;
+            });
+
+            // Add medical report if available
+            if (currentReport.severity) {
+                content += `\nMEDICAL REPORT\n`;
+                content += `${'='.repeat(60)}\n\n`;
+                content += `Severity: ${currentReport.severity.toUpperCase()}\n`;
+                content += `Confidence: ${(currentReport.confidence * 100).toFixed(1)}%\n\n`;
+                
+                if (currentReport.possibleConditions.length > 0) {
+                    content += `Possible Conditions:\n`;
+                    currentReport.possibleConditions.forEach(c => content += `  • ${c}\n`);
+                    content += `\n`;
+                }
+                
+                if (currentReport.medications.length > 0) {
+                    content += `Medications:\n`;
+                    currentReport.medications.forEach(m => content += `  • ${m}\n`);
+                    content += `\n`;
+                }
+                
+                if (currentReport.recommendations.length > 0) {
+                    content += `Recommendations:\n`;
+                    currentReport.recommendations.forEach(r => content += `  • ${r}\n`);
+                }
+            }
+
+            content += `\n\n${'='.repeat(60)}\n`;
+            content += `DISCLAIMER: This is not a substitute for professional medical advice.\n`;
+            content += `Always consult a qualified healthcare provider for diagnosis and treatment.\n`;
+
+            // Create download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `medical-conversation-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadAsPdf(title, date) {
+            // Create PDF content using HTML
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+                        .header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
+                        .header h1 { color: #667eea; margin: 0; }
+                        .info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+                        .conversation { margin-bottom: 30px; }
+                        .message { margin-bottom: 20px; page-break-inside: avoid; }
+                        .message-label { font-weight: bold; color: #667eea; margin-bottom: 5px; }
+                        .message-content { background: #f9fafb; padding: 15px; border-left: 3px solid #667eea; border-radius: 4px; }
+                        .report { background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 30px; }
+                        .report h2 { color: #92400e; margin-top: 0; }
+                        .severity { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+                        .severity-emergency { background: #fee2e2; color: #991b1b; }
+                        .severity-urgent { background: #fef3c7; color: #92400e; }
+                        .severity-routine { background: #d1fae5; color: #065f46; }
+                        .disclaimer { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin-top: 30px; font-size: 14px; }
+                        ul { margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🏥 Medical Llama - AI Health Assistant</h1>
+                        <p>Medical Consultation Report</p>
+                    </div>
+                    
+                    <div class="info">
+                        <p><strong>Conversation:</strong> ${title}</p>
+                        <p><strong>Date:</strong> ${date}</p>
+                        <p><strong>Patient:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
+                    </div>
+                    
+                    <h2>Conversation Transcript</h2>
+                    <div class="conversation">
+            `;
+
+            conversationHistory.forEach((msg, index) => {
+                htmlContent += `
+                    <div class="message">
+                        <div class="message-label">[${index + 1}] PATIENT:</div>
+                        <div class="message-content">${msg.user}</div>
+                    </div>
+                    <div class="message">
+                        <div class="message-label">[${index + 1}] ASSISTANT:</div>
+                        <div class="message-content">${msg.assistant.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            });
+
+            htmlContent += `</div>`;
+
+            // Add medical report
+            if (currentReport.severity) {
+                const severityClass = `severity-${currentReport.severity}`;
+                htmlContent += `
+                    <div class="report">
+                        <h2>Medical Assessment</h2>
+                        <p><strong>Severity:</strong> <span class="severity ${severityClass}">${currentReport.severity.toUpperCase()}</span></p>
+                        <p><strong>Confidence:</strong> ${(currentReport.confidence * 100).toFixed(1)}%</p>
+                `;
+
+                if (currentReport.possibleConditions.length > 0) {
+                    htmlContent += `<p><strong>Possible Conditions:</strong></p><ul>`;
+                    currentReport.possibleConditions.forEach(c => {
+                        htmlContent += `<li>${c}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (currentReport.medications.length > 0) {
+                    htmlContent += `<p><strong>Medications:</strong></p><ul>`;
+                    currentReport.medications.forEach(m => {
+                        htmlContent += `<li>${m}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (currentReport.recommendations.length > 0) {
+                    htmlContent += `<p><strong>Recommendations:</strong></p><ul>`;
+                    currentReport.recommendations.forEach(r => {
+                        htmlContent += `<li>${r}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                htmlContent += `</div>`;
+            }
+
+            htmlContent += `
+                    <div class="disclaimer">
+                        <strong>⚠️ DISCLAIMER:</strong> This is not a substitute for professional medical advice. 
+                        Always consult a qualified healthcare provider for diagnosis and treatment.
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                printWindow.print();
+                // Close after print dialog
+                setTimeout(() => printWindow.close(), 100);
+            };
+        }
+
+        // ============================================================================
+        // APPOINTMENT BOOKING FUNCTIONS
+        // ============================================================================
+
+        let selectedHospital = null;
+        let selectedDoctor = null;
+        let selectedDate = null;
+        let selectedTimeSlot = null;
+        let currentConsultationId = null;
+
+        // ============================================================================
+        // RECOMMENDED BOOKING (AUTO-BOOKING)
+        // ============================================================================
+        
+        async function recommendedBooking(consultationId = null) {
+            currentConsultationId = consultationId;
+            
+            // Open panel and show loading state
+            document.getElementById('appointmentModalOverlay').classList.add('active');
+            showAutoBookingProgress();
+            
+            try {
+                // Step 1: Load hospitals
+                updateAutoBookingProgress('Loading nearby hospitals...', 20);
+                const hospitalsResponse = await fetch('/hospitals');
+                if (!hospitalsResponse.ok) throw new Error('Failed to load hospitals');
+                const hospitals = await hospitalsResponse.json();
+                
+                if (hospitals.length === 0) {
+                    throw new Error('No hospitals available');
+                }
+                
+                // Select nearest hospital with good rating
+                const bestHospital = hospitals
+                    .filter(h => h.rating >= 4.0)
+                    .sort((a, b) => a.distance_km - b.distance_km)[0] || hospitals[0];
+                
+                selectedHospital = bestHospital.id;
+                updateAutoBookingProgress(`Selected: ${bestHospital.name} (${bestHospital.distance_km.toFixed(1)} km away)`, 40);
+                
+                // Step 2: Load doctors at selected hospital
+                await new Promise(resolve => setTimeout(resolve, 800)); // Brief pause for UX
+                updateAutoBookingProgress('Finding the best available doctor...', 50);
+                
+                const doctorsResponse = await fetch(`/hospitals/${selectedHospital}/doctors`);
+                if (!doctorsResponse.ok) throw new Error('Failed to load doctors');
+                const doctors = await doctorsResponse.json();
+                
+                if (doctors.length === 0) {
+                    throw new Error('No doctors available at selected hospital');
+                }
+                
+                // Select doctor based on rating and specialization match
+                let bestDoctor = null;
+                
+                // Try to match specialization to symptoms/condition if possible
+                const symptomsLower = (currentReport.possibleConditions.join(' ') + ' ' + 
+                                      conversationHistory.map(m => m.user).join(' ')).toLowerCase();
+                
+                if (symptomsLower.includes('heart') || symptomsLower.includes('chest')) {
+                    bestDoctor = doctors.find(d => d.specialization.toLowerCase().includes('cardiolog'));
+                } else if (symptomsLower.includes('bone') || symptomsLower.includes('joint') || symptomsLower.includes('fracture')) {
+                    bestDoctor = doctors.find(d => d.specialization.toLowerCase().includes('orthoped'));
+                } else if (symptomsLower.includes('skin') || symptomsLower.includes('rash')) {
+                    bestDoctor = doctors.find(d => d.specialization.toLowerCase().includes('dermatolog'));
+                } else if (symptomsLower.includes('mental') || symptomsLower.includes('anxiety') || symptomsLower.includes('depress')) {
+                    bestDoctor = doctors.find(d => d.specialization.toLowerCase().includes('psychiatr'));
+                }
+                
+                // Fallback to highest rated doctor if no specialization match
+                if (!bestDoctor) {
+                    bestDoctor = doctors.sort((a, b) => b.rating - a.rating)[0];
+                }
+                
+                selectedDoctor = {
+                    id: bestDoctor.id,
+                    name: bestDoctor.name,
+                    specialization: bestDoctor.specialization,
+                    fee: bestDoctor.consultation_fee
+                };
+                
+                updateAutoBookingProgress(`Selected: Dr. ${bestDoctor.name} (${bestDoctor.specialization})`, 65);
+                
+                // Step 3: Find earliest available slot
+                await new Promise(resolve => setTimeout(resolve, 800));
+                updateAutoBookingProgress('Finding the earliest available time slot...', 75);
+                
+                const availability = typeof bestDoctor.availability === 'string' 
+                    ? JSON.parse(bestDoctor.availability) 
+                    : bestDoctor.availability;
+                
+                // Try next 7 days
+                let appointmentFound = false;
+                const today = new Date();
+                
+                for (let dayOffset = 1; dayOffset <= 7 && !appointmentFound; dayOffset++) {
+                    const checkDate = new Date(today);
+                    checkDate.setDate(today.getDate() + dayOffset);
+                    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+                    
+                    const daySlots = availability[dayName];
+                    if (daySlots && daySlots.length > 0) {
+                        // Select earliest slot (first slot of the day)
+                        selectedDate = checkDate.toISOString().split('T')[0];
+                        selectedTimeSlot = daySlots[0];
+                        appointmentFound = true;
+                    }
+                }
+                
+                if (!appointmentFound) {
+                    throw new Error('No available time slots in the next 7 days');
+                }
+                
+                const appointmentDateTime = new Date(selectedDate + 'T' + selectedTimeSlot);
+                const formattedDate = appointmentDateTime.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                updateAutoBookingProgress(`Selected: ${formattedDate} at ${selectedTimeSlot}`, 85);
+                
+                // Step 4: Book the appointment
+                await new Promise(resolve => setTimeout(resolve, 800));
+                updateAutoBookingProgress('Confirming your appointment...', 95);
+                
+                const reason = currentReport.possibleConditions.length > 0 
+                    ? currentReport.possibleConditions[0] 
+                    : 'General consultation';
+                
+                const symptoms = conversationHistory.length > 0
+                    ? conversationHistory[0].user
+                    : '';
+                
+                const bookingResponse = await fetch('/appointments/book', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        consultation_id: currentConsultationId,
+                        doctor_id: selectedDoctor.id,
+                        hospital_id: selectedHospital,
+                        appointment_date: appointmentDateTime.toISOString(),
+                        duration_minutes: 30,
+                        reason: reason,
+                        symptoms: symptoms,
+                        notes: 'Auto-booked via Recommended Booking'
+                    })
+                });
+                
+                if (!bookingResponse.ok) {
+                    throw new Error('Failed to book appointment');
+                }
+                
+                const result = await bookingResponse.json();
+                
+                // Show success
+                updateAutoBookingProgress('✅ Appointment Successfully Booked!', 100);
+                
+                // Show success summary
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                showAutoBookingSuccess(bestHospital, bestDoctor, appointmentDateTime);
+                
+                // Add to chat
+                addAssistantMessage(`🎉 I've automatically booked an appointment for you!\n\n📅 Appointment Details:\n• Hospital: ${bestHospital.name} (${bestHospital.distance_km.toFixed(1)} km away)\n• Doctor: Dr. ${bestDoctor.name} (${bestDoctor.specialization})\n• Date & Time: ${appointmentDateTime.toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n• Fee: $${bestDoctor.consultation_fee}\n\nYou'll receive reminder notifications before your appointment. You can view all appointments on the dashboard.`);
+                
+                // Auto-close after 5 seconds
+                if (window.appointmentAutoCloseTimer) {
+                    clearTimeout(window.appointmentAutoCloseTimer);
+                }
+                window.appointmentAutoCloseTimer = setTimeout(() => {
+                    closeAppointmentModal();
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Recommended booking error:', error);
+                showAutoBookingError(error.message);
+            }
+        }
+        
+        function showAutoBookingProgress() {
+            const modal = document.querySelector('.appointment-modal');
+            modal.innerHTML = `
+                <div class="appointment-modal-header">
+                    <h2>🤖 Recommended Booking</h2>
+                    <button class="close-btn" onclick="closeAppointmentModal()">✕</button>
+                </div>
+                <div style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+                    <div style="width: 100%; max-width: 350px;">
+                        <div style="font-size: 64px; text-align: center; margin-bottom: 25px;">🔄</div>
+                        <h3 style="text-align: center; color: #1f2937; margin-bottom: 30px; font-size: 22px;">
+                            Finding the best appointment for you...
+                        </h3>
+                        <div style="background: #f3f4f6; border-radius: 12px; height: 12px; overflow: hidden; margin-bottom: 20px;">
+                            <div id="autoBookingProgressBar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.5s ease;"></div>
+                        </div>
+                        <p id="autoBookingStatus" style="text-align: center; color: #6b7280; font-size: 15px; min-height: 40px;">
+                            Initializing...
+                        </p>
+                        <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-top: 25px;">
+                            <p style="color: #1e40af; font-size: 14px; margin: 0;">
+                                <strong>💡 What we're doing:</strong><br>
+                                • Finding the nearest hospital<br>
+                                • Selecting the best-rated doctor<br>
+                                • Booking the earliest available slot
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateAutoBookingProgress(message, percent) {
+            const statusEl = document.getElementById('autoBookingStatus');
+            const progressBar = document.getElementById('autoBookingProgressBar');
+            
+            if (statusEl) statusEl.textContent = message;
+            if (progressBar) progressBar.style.width = percent + '%';
+        }
+        
+        function showAutoBookingSuccess(hospital, doctor, appointmentDateTime) {
+            const modal = document.querySelector('.appointment-modal');
+            const formattedDate = appointmentDateTime.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            modal.innerHTML = `
+                <div class="appointment-modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h2>✅ Booking Confirmed!</h2>
+                    <button class="close-btn" onclick="closeAppointmentModal()">✕</button>
+                </div>
+                <div style="padding: 40px; flex: 1; overflow-y: auto;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 80px; margin-bottom: 15px; animation: successPop 0.6s ease;">✓</div>
+                        <h3 style="color: #065f46; font-size: 24px; margin: 0;">Your appointment is confirmed!</h3>
+                        <p style="color: #047857; margin-top: 8px;">Closing in 5 seconds...</p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 16px; padding: 25px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #bbf7d0;">
+                            <span style="font-size: 24px;">🏥</span>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #16a34a; font-weight: 600; margin-bottom: 4px;">HOSPITAL</div>
+                                <div style="color: #065f46; font-weight: 700; font-size: 16px;">${hospital.name}</div>
+                                <div style="color: #047857; font-size: 13px; margin-top: 2px;">${hospital.address}</div>
+                                <div style="color: #16a34a; font-size: 13px; margin-top: 4px;">📍 ${hospital.distance_km.toFixed(1)} km away</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #bbf7d0;">
+                            <span style="font-size: 24px;">👨‍⚕️</span>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #16a34a; font-weight: 600; margin-bottom: 4px;">DOCTOR</div>
+                                <div style="color: #065f46; font-weight: 700; font-size: 16px;">Dr. ${doctor.name}</div>
+                                <div style="color: #047857; font-size: 13px; margin-top: 2px;">${doctor.specialization}</div>
+                                <div style="color: #16a34a; font-size: 13px; margin-top: 4px;">⭐ ${doctor.rating} rating</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #bbf7d0;">
+                            <span style="font-size: 24px;">📅</span>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #16a34a; font-weight: 600; margin-bottom: 4px;">DATE & TIME</div>
+                                <div style="color: #065f46; font-weight: 700; font-size: 16px;">${formattedDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 12px;">
+                            <span style="font-size: 24px;">💰</span>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #16a34a; font-weight: 600; margin-bottom: 4px;">CONSULTATION FEE</div>
+                                <div style="color: #065f46; font-weight: 700; font-size: 18px;">$${doctor.consultation_fee}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px;">
+                        <p style="color: #92400e; font-size: 13px; margin: 0;">
+                            <strong>🔔 Reminder Notifications:</strong><br>
+                            You'll receive notifications 1 day and 1 hour before your appointment.
+                        </p>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes successPop {
+                        0% { transform: scale(0); opacity: 0; }
+                        50% { transform: scale(1.2); }
+                        100% { transform: scale(1); opacity: 1; }
+                    }
+                </style>
+            `;
+        }
+        
+        function showAutoBookingError(errorMessage) {
+            const modal = document.querySelector('.appointment-modal');
+            modal.innerHTML = `
+                <div class="appointment-modal-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    <h2>❌ Booking Failed</h2>
+                    <button class="close-btn" onclick="closeAppointmentModal()">✕</button>
+                </div>
+                <div style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">😞</div>
+                    <h3 style="color: #991b1b; margin-bottom: 15px; text-align: center;">Automatic booking failed</h3>
+                    <p style="color: #6b7280; text-align: center; margin-bottom: 25px;">${errorMessage}</p>
+                    <button onclick="openAppointmentModal()" style="padding: 14px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 15px;">
+                        📅 Try Manual Booking Instead
+                    </button>
+                    <button onclick="closeAppointmentModal()" style="margin-top: 12px; padding: 10px 24px; background: transparent; color: #6b7280; border: none; cursor: pointer; text-decoration: underline; font-size: 14px;">
+                        Close
+                    </button>
+                </div>
+            `;
+        }
+
+        function openAppointmentModal(consultationId = null) {
+            currentConsultationId = consultationId;
+            // Show the right-side appointment panel
+            document.getElementById('appointmentModalOverlay').classList.add('active');
+            goToStep(1);
+            loadHospitals();
+        }
+
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModalOverlay').classList.remove('active');
+            // Clear any selection and timers
+            selectedHospital = null;
+            selectedDoctor = null;
+            selectedDate = null;
+            selectedTimeSlot = null;
+            if (window.appointmentAutoCloseTimer) {
+                clearTimeout(window.appointmentAutoCloseTimer);
+                window.appointmentAutoCloseTimer = null;
+            }
+        }
+
+        function goToStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.style.display = 'none';
+            });
+            document.getElementById(`step${stepNumber}`).style.display = 'block';
+        }
+
+        async function loadHospitals() {
+            const hospitalList = document.getElementById('hospitalList');
+            hospitalList.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Loading hospitals...</div>';
+
+            try {
+                const response = await fetch('/hospitals');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch hospitals');
+                }
+                
+                const hospitals = await response.json();
+
+                if (hospitals.length === 0) {
+                    hospitalList.innerHTML = '<div class="error-message">No hospitals available at the moment. Please try again later.</div>';
+                    return;
+                }
+
+                hospitalList.innerHTML = hospitals.map(hospital => {
+                    // Handle specialties - it's already an array from backend
+                    const specialties = Array.isArray(hospital.specialties) ? hospital.specialties : [];
+                    
+                    return `
+                    <div class="hospital-card" onclick="selectHospital(${hospital.id})" data-hospital-id="${hospital.id}">
+                        <h4>🏥 ${hospital.name}</h4>
+                        <div class="hospital-info">
+                            <div><span class="info-icon">📍</span> ${hospital.address}, ${hospital.city}</div>
+                            <div><span class="info-icon">🚗</span> ${hospital.distance_km.toFixed(1)} km away</div>
+                            <div><span class="info-icon">📞</span> ${hospital.phone}</div>
+                            <div><span class="info-icon">⭐</span> <span class="rating">${hospital.rating.toFixed(1)}</span> / 5.0</div>
+                        </div>
+                        <div class="specialties-tags">
+                            ${specialties.slice(0, 4).map(s => 
+                                `<span class="specialty-tag">${s}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading hospitals:', error);
+                hospitalList.innerHTML = '<div class="error-message">❌ Failed to load hospitals. Please check your connection and try again.</div>';
+            }
+        }
+
+        async function selectHospital(hospitalId) {
+            selectedHospital = hospitalId;
+            
+            // Visual feedback
+            document.querySelectorAll('.hospital-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.hospital-card').classList.add('selected');
+
+            // Load doctors
+            const doctorList = document.getElementById('doctorList');
+            doctorList.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Loading doctors...</div>';
+
+            try {
+                const response = await fetch(`/hospitals/${hospitalId}/doctors`);
+                const doctors = await response.json();
+
+                if (doctors.length === 0) {
+                    doctorList.innerHTML = '<p style="text-align: center; color: #6b7280;">No doctors available at this hospital.</p>';
+                    return;
+                }
+
+                doctorList.innerHTML = doctors.map(doctor => `
+                    <div class="doctor-card" onclick="selectDoctor(${doctor.id}, '${doctor.name}', '${doctor.specialization}', ${doctor.consultation_fee})">
+                        <img src="${doctor.photo_url || 'https://i.pravatar.cc/150?img=1'}" alt="${doctor.name}" class="doctor-photo">
+                        <div class="doctor-details">
+                            <h4>👨‍⚕️ ${doctor.name}</h4>
+                            <div class="doctor-info">
+                                <div>🎓 ${doctor.specialization}</div>
+                                <div>📋 ${doctor.qualifications}</div>
+                                <div>💼 ${doctor.experience_years} years experience</div>
+                                <div>⭐ <span class="rating">${doctor.rating}</span> / 5.0</div>
+                                <div>💰 $${doctor.consultation_fee} consultation fee</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                goToStep(2);
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                doctorList.innerHTML = '<p style="text-align: center; color: #ef4444;">Failed to load doctors. Please try again.</p>';
+            }
+        }
+
+        function selectDoctor(doctorId, doctorName, specialization, fee) {
+            selectedDoctor = {
+                id: doctorId,
+                name: doctorName,
+                specialization: specialization,
+                fee: fee
+            };
+
+            // Visual feedback
+            document.querySelectorAll('.doctor-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.doctor-card').classList.add('selected');
+
+            // Set minimum date to tomorrow
+            const dateInput = document.getElementById('appointmentDate');
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.min = tomorrow.toISOString().split('T')[0];
+            
+            // Set maximum date to 60 days from now
+            const maxDate = new Date();
+            maxDate.setDate(maxDate.getDate() + 60);
+            dateInput.max = maxDate.toISOString().split('T')[0];
+
+            goToStep(3);
+        }
+
+        async function loadTimeSlots() {
+            const dateInput = document.getElementById('appointmentDate');
+            selectedDate = dateInput.value;
+
+            if (!selectedDate) return;
+
+            const date = new Date(selectedDate);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+            
+            try {
+                // Fetch doctor's availability
+                const response = await fetch(`/hospitals/${selectedHospital}/doctors`);
+                const doctors = await response.json();
+                const doctor = doctors.find(d => d.id === selectedDoctor.id);
+                
+                if (!doctor || !doctor.availability) {
+                    timeSlotsContainer.innerHTML = '<div class="error-message">No available time slots for selected date.</div>';
+                    return;
+                }
+
+                const availability = typeof doctor.availability === 'string' 
+                    ? JSON.parse(doctor.availability) 
+                    : doctor.availability;
+                const daySlots = availability[dayName];
+
+                if (!daySlots || daySlots.length === 0) {
+                    timeSlotsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; background: #fef3c7; border-radius: 16px; border: 2px solid #fcd34d;">
+                            <p style="font-size: 48px; margin-bottom: 15px;">📅</p>
+                            <p style="color: #92400e; font-weight: 600; font-size: 16px;">Doctor not available on ${dayName}s</p>
+                            <p style="color: #78350f; font-size: 14px; margin-top: 8px;">Please select another date</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                timeSlotsContainer.innerHTML = `
+                    <div style="margin-bottom: 15px; padding: 15px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <p style="color: #1e40af; font-weight: 600; margin: 0;">📅 ${daySlots.length} time slots available on ${dayName}</p>
+                    </div>
+                    <div class="time-slots">
+                        ${daySlots.map(time => `
+                            <div class="time-slot" onclick="selectTimeSlot('${time}')">
+                                🕐 ${time}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                timeSlotsContainer.innerHTML = '<div class="error-message">Failed to load time slots. Please try again.</div>';
+            }
+        }
+
+        function selectTimeSlot(time) {
+            selectedTimeSlot = time;
+
+            // Visual feedback
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            // Show summary
+            showAppointmentSummary();
+            goToStep(4);
+        }
+
+        async function showAppointmentSummary() {
+            const summaryContainer = document.getElementById('appointmentSummary');
+            
+            // Get hospital details
+            const hospitalResponse = await fetch('/hospitals');
+            const hospitals = await hospitalResponse.json();
+            const hospital = hospitals.find(h => h.id === selectedHospital);
+
+            const dateObj = new Date(selectedDate + 'T' + selectedTimeSlot);
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            summaryContainer.innerHTML = `
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 16px; margin-bottom: 25px;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+                    <h4 style="margin: 0; color: #1e40af; font-size: 18px; font-weight: 700;">Your Appointment Details</h4>
+                </div>
+                
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">🏥</span> Hospital</span>
+                    <span class="summary-value">${hospital.name}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">📍</span> Address</span>
+                    <span class="summary-value">${hospital.address}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">🚗</span> Distance</span>
+                    <span class="summary-value">${hospital.distance_km.toFixed(1)} km away</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">👨‍⚕️</span> Doctor</span>
+                    <span class="summary-value">Dr. ${selectedDoctor.name}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">🎓</span> Specialization</span>
+                    <span class="summary-value">${selectedDoctor.specialization}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">📅</span> Date</span>
+                    <span class="summary-value">${formattedDate}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">⏰</span> Time</span>
+                    <span class="summary-value">${selectedTimeSlot}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">⏱️</span> Duration</span>
+                    <span class="summary-value">30 minutes</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label"><span class="info-icon">💰</span> Consultation Fee</span>
+                    <span class="summary-value" style="color: #059669; font-size: 18px;">$${selectedDoctor.fee.toFixed(2)}</span>
+                </div>
+            `;
+        }
+
+        async function confirmAppointment() {
+            const notes = document.getElementById('appointmentNotes').value;
+            const confirmBtn = document.querySelector('.confirm-btn');
+            
+            // Disable button and show loading
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = '⏳ Booking...';
+
+            try {
+                // Get chief complaint and symptoms from current report
+                const reason = currentReport.possibleConditions.length > 0 
+                    ? currentReport.possibleConditions[0] 
+                    : 'General consultation';
+                
+                const symptoms = conversationHistory.length > 0
+                    ? conversationHistory[0].user
+                    : '';
+
+                const appointmentDateTime = new Date(selectedDate + 'T' + selectedTimeSlot);
+
+                const response = await fetch('/appointments/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        consultation_id: currentConsultationId,
+                        doctor_id: selectedDoctor.id,
+                        hospital_id: selectedHospital,
+                        appointment_date: appointmentDateTime.toISOString(),
+                        duration_minutes: 30,
+                        reason: reason,
+                        symptoms: symptoms,
+                        notes: notes
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Show success message with better formatting
+                const successMessage = `✅ Appointment Booked Successfully!\n\n` +
+                    `👨‍⚕️ Doctor: ${result.doctor}\n` +
+                    `🏥 Hospital: ${result.hospital}\n` +
+                    `📅 Date: ${appointmentDateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n` +
+                    `⏰ Time: ${appointmentDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}\n\n` +
+                    `🔔 You will receive reminder notifications before your appointment.`;
+                
+                // Show success alert
+                alert(successMessage);
+
+                // Display a small success banner inside the appointment panel before auto-closing
+                const overlay = document.getElementById('appointmentModalOverlay');
+                const summary = document.getElementById('appointmentSummary');
+                if (summary) {
+                    const successBanner = document.createElement('div');
+                    successBanner.style.cssText = 'padding:16px; background:#ecfdf5; border:1px solid #10b981; border-radius:12px; margin-bottom:12px; color:#065f46; font-weight:600;';
+                    successBanner.innerHTML = `✅ Appointment booked. This panel will close automatically in 5 seconds.`;
+                    summary.prepend(successBanner);
+                }
+
+                // Do NOT close immediately — auto-close after 5 seconds
+                if (window.appointmentAutoCloseTimer) {
+                    clearTimeout(window.appointmentAutoCloseTimer);
+                }
+                window.appointmentAutoCloseTimer = setTimeout(() => {
+                    closeAppointmentModal();
+                }, 5000);
+
+                // Show notification in chat
+                addAssistantMessage(`🎉 Great news! Your appointment has been successfully booked!\n\n📅 Appointment Details:\n• Doctor: ${result.doctor}\n• Hospital: ${result.hospital}\n• Date & Time: ${appointmentDateTime.toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n\nYou'll receive reminder notifications:\n• 1 day before your appointment\n• 1 hour before your appointment\n\nYou can view all your appointments on the dashboard.`);
+                
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                // Only show error if it's a real error, not if appointment was actually booked
+                if (!error.message.includes('200') && !error.message.includes('201')) {
+                    alert('⚠️ There was an issue with the booking process. Please check your appointments on the dashboard to confirm if it was successful.');
+                }
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '✓ Confirm Appointment';
+            }
+        }
+
+        // Check if we should show appointment booking option after diagnosis
+        function checkAndOfferAppointment() {
+            if (currentReport.severity === 'urgent' || currentReport.severity === 'referral') {
+                // Add booking buttons to the last assistant message
+                setTimeout(() => {
+                    const lastMessage = document.querySelector('.message.assistant:last-child .message-content');
+                    if (lastMessage && !lastMessage.querySelector('.booking-buttons-container')) {
+                        // Create container for buttons
+                        const buttonsContainer = document.createElement('div');
+                        buttonsContainer.className = 'booking-buttons-container';
+                        buttonsContainer.style.cssText = `
+                            margin-top: 20px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        `;
+                        
+                        // Recommended Booking Button (Primary)
+                        const recommendedButton = document.createElement('button');
+                        recommendedButton.className = 'recommended-booking-btn';
+                        recommendedButton.innerHTML = '🤖 <strong>Recommended Booking</strong><br><span style="font-size: 12px; font-weight: normal; opacity: 0.9;">Let AI pick the best appointment for you</span>';
+                        recommendedButton.style.cssText = `
+                            padding: 16px 24px;
+                            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 14px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s;
+                            text-align: left;
+                            line-height: 1.5;
+                            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                        `;
+                        recommendedButton.onmouseover = function() {
+                            this.style.transform = 'translateY(-3px)';
+                            this.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.4)';
+                        };
+                        recommendedButton.onmouseout = function() {
+                            this.style.transform = 'translateY(0)';
+                            this.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                        };
+                        recommendedButton.onclick = () => recommendedBooking(null);
+                        
+                        // Manual Booking Button (Secondary)
+                        const manualButton = document.createElement('button');
+                        manualButton.className = 'manual-booking-btn';
+                        manualButton.innerHTML = '📅 <strong>Manual Booking</strong><br><span style="font-size: 12px; font-weight: normal; opacity: 0.8;">Choose hospital, doctor, and time yourself</span>';
+                        manualButton.style.cssText = `
+                            padding: 16px 24px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 14px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s;
+                            text-align: left;
+                            line-height: 1.5;
+                            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                        `;
+                        manualButton.onmouseover = function() {
+                            this.style.transform = 'translateY(-3px)';
+                            this.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
+                        };
+                        manualButton.onmouseout = function() {
+                            this.style.transform = 'translateY(0)';
+                            this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                        };
+                        manualButton.onclick = () => openAppointmentModal(null);
+                        
+                        buttonsContainer.appendChild(recommendedButton);
+                        buttonsContainer.appendChild(manualButton);
+                        lastMessage.appendChild(buttonsContainer);
+                    }
+                }, 500);
+            }
+        }
+    </script>
+</body>
+</html>
