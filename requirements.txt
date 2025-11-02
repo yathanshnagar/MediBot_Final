@@ -5,6 +5,7 @@ pydantic
 email-validator
 langchain
 langchain-community
+langchain_ollama
 langgraph
 python-multipart
 python-dotenv

@@ -2039,9 +2039,12 @@
         }
 
         // Emergency Functions
+        let emergencyAutoCallTimer = null;
+        
         function showEmergencyModal(message) {
             const overlay = document.getElementById('emergencyOverlay');
             const messageEl = document.getElementById('emergencyMessage');
+            const callButton = document.querySelector('.emergency-call-button');
             
             if (message) {
                 messageEl.textContent = message;
@@ -2051,22 +2054,82 @@
             
             // Play alert sound (browser beep)
             playEmergencySound();
+            
+            // Add countdown timer display
+            let countdownEl = document.getElementById('emergencyCountdown');
+            if (!countdownEl) {
+                countdownEl = document.createElement('div');
+                countdownEl.id = 'emergencyCountdown';
+                countdownEl.style.cssText = `
+                    font-size: 18px;
+                    color: #991b1b;
+                    font-weight: bold;
+                    margin: 15px 0;
+                    animation: pulse 1s ease-in-out infinite;
+                `;
+                callButton.parentNode.insertBefore(countdownEl, callButton);
+            }
+            
+            // Start countdown from 6.9 seconds
+            let timeRemaining = 6.9;
+            countdownEl.textContent = `Auto-calling in ${timeRemaining.toFixed(1)} seconds...`;
+            
+            // Clear any existing timer
+            if (emergencyAutoCallTimer) {
+                clearInterval(emergencyAutoCallTimer);
+            }
+            
+            // Update countdown every 100ms for smooth animation
+            emergencyAutoCallTimer = setInterval(() => {
+                timeRemaining -= 0.1;
+                if (timeRemaining <= 0) {
+                    clearInterval(emergencyAutoCallTimer);
+                    countdownEl.textContent = 'Calling now...';
+                    initiateEmergencyCall();
+                } else {
+                    countdownEl.textContent = `Auto-calling in ${timeRemaining.toFixed(1)} seconds...`;
+                }
+            }, 100);
         }
 
         function closeEmergencyModal() {
             const overlay = document.getElementById('emergencyOverlay');
             const callingAnimation = document.getElementById('callingAnimation');
             
+            // Clear the auto-call timer if user closes the modal
+            if (emergencyAutoCallTimer) {
+                clearInterval(emergencyAutoCallTimer);
+                emergencyAutoCallTimer = null;
+            }
+            
             overlay.classList.remove('active');
             callingAnimation.classList.remove('active');
+            
+            // Remove countdown element if it exists
+            const countdownEl = document.getElementById('emergencyCountdown');
+            if (countdownEl) {
+                countdownEl.remove();
+            }
         }
 
         function initiateEmergencyCall() {
             const callButton = document.querySelector('.emergency-call-button');
             const callingAnimation = document.getElementById('callingAnimation');
+            const countdownEl = document.getElementById('emergencyCountdown');
             
-            // Hide button and show calling animation
+            // Clear the timer since call is being initiated
+            if (emergencyAutoCallTimer) {
+                clearInterval(emergencyAutoCallTimer);
+                emergencyAutoCallTimer = null;
+            }
+            
+            // Hide button and countdown
             callButton.style.display = 'none';
+            if (countdownEl) {
+                countdownEl.style.display = 'none';
+            }
+            
+            // Show calling animation
             callingAnimation.classList.add('active');
             
             // Simulate call duration (5 seconds)

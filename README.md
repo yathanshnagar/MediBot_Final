@@ -62,6 +62,143 @@ A comprehensive AI-powered medical chatbot system that provides conversational h
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Authentication**: Email/password with token-based sessions
 
+---
+
+## Comprehensiveness of functions, features, and testing
+
+Feature coverage (implemented endpoints and flows):
+
+- Authentication: signup/login endpoints (`/auth/signup`, `/auth/login`) in `main.py`.
+- Patient management: register, get, and update patient profiles (`/patients/*`).
+- Conversational triage: `/chat/triage` accepts messages + media and returns a structured triage outcome.
+- Medical history: `/users/{user_id}/medical-history` and `/consultations/save` for storing consultations.
+- Appointments: hospitals list, doctors list, book/cancel appointments, reminders background task.
+- Notifications: user notifications endpoints.
+
+Testing and verification:
+- Unit / integration helpers: `test_workflow.py` exercises the workflow start-to-finish (note: it expects an Ollama model running for live LLM calls).
+- API checks & quick script: `quick_test.py` and `test_api.py` show simple health checks and sample triage calls.
+
+Edge cases handled in code:
+- Missing or invalid patient — `404` responses and appropriate checks.
+- LLM JSON parsing errors — fallbacks that ask clarifying questions instead of returning dangerous assertions.
+- Emergency detection via keyword matching (immediate escalation) — reduces risk of incorrect triage for clear emergencies.
+- Media processing: `chat/triage` accepts media attachments and includes metadata in stored interactions.
+
+Limitations & verification notes:
+- Real clinical validation is required before any production deployment. This project is a prototype for decision support and triage only.
+- The LLM is not an approved medical device; the system includes multiple disclaimers and escalation paths to clinicians.
+
+---
+
+## Incorporation of advanced technologies
+
+This project intentionally integrates multiple modern technologies to maximize performance, scalability, maintainability, and safety. The following are the primary technologies used and how they contribute to the system:
+
+- FastAPI — production-grade ASGI web framework used for the REST API (`main.py`). FastAPI provides automatic OpenAPI docs, async-friendly performance, and strong typing via Pydantic.
+- SQLAlchemy (ORM) + SQLite — robust persistence layer (`database.py`) for patient profiles, consultations, interactions, and events. SQLAlchemy provides maintainable models and migrations-ready patterns.
+- Ollama via LangChain (`langchain_ollama`) — local LLM serving that keeps inference on-prem or on local hardware, improving privacy and reducing inference network latency compared to remote APIs. Implemented in `llm_wrapper.py`.
+- Langraph workflow engine — explicit state-graph orchestration for multi-step medical reasoning (triage → pathway → action → finalize) in `workflow.py`. This enables easy testing and deterministic routing.
+- LangChain (and prompt engineering) — structured system prompts (see `config.py`) and a few-shot approach to improve the reliability of LLM outputs and make them parseable (JSON responses expected by the service).
+- Frontend single-file UIs (HTML/CSS/Vanilla JS) — lightweight, dependency-free client pages: `chat_ui.html`, `medical_history.html`, `auth.html`. They provide UX features such as media upload, appointment booking UI, and an emergency modal.
+- Safety & validation utilities — explicit emergency keyword detection, confidence thresholds (see `config.py`), and fallback JSON parsing with safeties in `llm_wrapper.py` to reduce hallucination risk.
+
+Measured / observed effects (from project test comments and in-code notes):
+- First LLM inference: ~5–10s (model load to VRAM) — noted in `test_workflow.py` and `test_workflow` prints. Subsequent inferences are faster once the model is warmed.
+- Emergency detection short-circuits expensive prompts and immediately returns high-confidence escalations (instant on-match), reducing average triage latency for clear emergencies.
+
+Notes about data provenance and assumptions:
+- Performance numbers and the "5–10s" inference note come from the project's test files (comments in `test_workflow.py` and `quick_test.py`). If you want precise latency numbers for your hardware, run `quick_test.py` and collect timing metrics.
+
+---
+
+## LLM-based Agent: Perception, Decision-making, and Interaction
+
+This project uses an LLM-centered agent broken into three functional responsibilities. The implementation is in `llm_wrapper.py` and orchestrated by `workflow.py` and `main.py`.
+
+Perception (input stage):
+- Inputs accepted: free-text patient message, optional media (images, audio, files), and recent conversation history (last 5 interactions). The chat UI attaches media and the API stores a short media summary.
+- Emergency keyword detection: `EMERGENCY_KEYWORDS` in `config.py` are checked in `MedicalLLMWrapper._check_emergency_keywords()` for immediate escalation (low-latency decision path).
+
+Decision-making (reasoning / policy stage):
+- Conversational triage: `perform_triage()` constructs a JSON-instruction prompt for the LLM to either ask targeted follow-up questions or provide a full assessment with severity, reasoning, suggested actions, and confidence.
+- Care pathway selection: `recommend_care_pathway()` uses a separate system prompt to map triage to structured care pathways (`CARE_PATHWAY_SYSTEM_PROMPT` in `config.py`).
+- Execution plan: `execute_action()` generates concrete action steps (book appointment, call emergency services, OTC suggestions) based on the care pathway.
+- Confidence and escalation policy: `CONFIDENCE_THRESHOLD` in `config.py` determines whether low-confidence cases are escalated to a clinician. Langraph routes low-confidence or emergency cases to the `escalate` node.
+
+Interaction (output / dialog stage):
+- JSON-first responses: the LLM is asked to return structured JSON so downstream code can parse and present consistent information to the user. Parsing fallback is implemented to handle malformed outputs.
+- Safety & disclaimers: each finalized action plan includes a medical disclaimer (see `workflow._node_finalize`) and `llm_wrapper.validate_response()` contains heuristics for detecting risky diagnosis language.
+
+Benefits observed in the codebase:
+- Deterministic routing: by separating triage, pathway, and action into nodes, the system improves traceability and makes it easier to test each step independently.
+- Fall-back and safety: emergency keywords short-circuit prompts for instant escalation; parsing fallbacks ensure the system asks clarifying questions instead of returning potentially unsafe or misleading diagnostics.
+
+---
+
+## Agile development experience 
+
+The project followed an Agile Scrum methodology to enable iterative development, rapid prototyping, and continuous improvement. The work was divided into three sprints under Stage 2, each lasting one week, focusing on progressively building and refining system functionality.
+
+**Sprint 1 (Week 10: Oct 13 – Oct 19)**
+
+Goal: Establish project foundations and implement proof-of-concept functionalities.
+Key Deliverables:
+
+Frontend project setup (web/mobile) and repository workflow
+
+Initial LLM triage pipeline and care flow integration
+
+Session and case management (frontend)
+
+Multimodal input handling (text/audio/image)
+
+Emergency escalation design
+
+Coding framework, tooling, and CI/CD workflow setup
+
+✅ Outcome: All foundational components were successfully completed, ensuring project readiness for full-stack integration.
+
+**Sprint 2 (Week 11: Oct 20 – Oct 26)**
+
+Goal: Implement and test the full end-to-end care flow pipeline.
+Key Deliverables:
+
+Reminder & follow-up engine
+
+Emergency escalation workflow (EMS API)
+
+Summary generation and export (PDF)
+
+Safety guardrails for reasoning
+
+Core AI agent logic implementation
+
+🧩 Outcome: Completed all backend workflows and integrated safety and persistence features, preparing for deployment.
+
+**Sprint 3 (Week 12: Oct 27 – Nov 2)**
+
+Goal: System hardening and deployment for final demo.
+Key Deliverables:
+
+Backend integration with AI agent and LLM alignment
+
+Containerisation using Docker & CI/CD (GitHub Actions)
+
+Logging, observability, and performance optimisation
+
+Final UI/UX polish and LLM refinement
+
+Application deployment and hosting for prototype demonstration
+
+🚀 Outcome: Finalised and deployed a fully functional prototype with improved reliability, usability, and maintainability.
+
+
+Overall Agile Outcome:
+The iterative sprint-based approach enabled continuous integration, regular testing, and frequent team reviews. This structure allowed the team to adapt quickly to new requirements, ensure feature completeness, and deliver a stable, production-ready healthcare assistant prototype.
+
+---
+
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -115,7 +252,7 @@ Run the installer - it will:
 Open a new terminal/PowerShell window and run:
 
 ```powershell
-ollama pull mistral
+ollama pull mistral:7b-instruct
 ```
 
 This downloads the Mistral 7B Instruct model (~4.1GB). Wait for completion:
@@ -381,9 +518,12 @@ For issues:
 
 ---
 
-**Built with ❤️ using FastAPI, LangChain, and Ollama**
-
 *Remember: This is a demonstration project. Always consult real healthcare professionals for medical advice!*
 
 **Version:** 1.0.0  
 **Last Updated:** November 2, 2025
+# Medical Llama — AI Health Assistant
+
+
+
+
